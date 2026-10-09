@@ -2,1001 +2,809 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cyber Pong Arena</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Cyber Pong Arena // Arcade Pro Edition</title>
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
+    :root {
+      --neon-cyan: #00f2fe;
+      --neon-magenta: #ff007f;
+      --neon-amber: #ffb703;
+      --bg-dark: #04010a;
+      --panel-bg: rgba(8, 3, 18, 0.88);
+      --font-stack: 'Courier New', Courier, monospace;
     }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+
     body {
-      background: radial-gradient(circle at center, #100520, #04010a);
+      background: radial-gradient(circle at center, #150628 0%, #06020e 70%, var(--bg-dark) 100%);
       color: #fff;
-      font-family: 'Courier New', Courier, monospace;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      overflow: hidden;
-      user-select: none;
+      font-family: var(--font-stack);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-height: 100vh; overflow: hidden;
     }
+
     .wrapper {
-      position: relative;
+      position: relative; box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
+      border-radius: 12px; overflow: hidden; border: 2px solid rgba(255, 0, 127, 0.4);
     }
-    canvas {
-      background: #020008;
-      border: 2px solid #ff007f;
-      box-shadow: 0 0 35px rgba(255, 0, 127, 0.35), inset 0 0 25px rgba(0, 242, 254, 0.15);
-      border-radius: 8px;
-      display: block;
+
+    canvas { display: block; background: #020006; border-radius: 10px; }
+
+    .scanlines {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+      background-size: 100% 4px; pointer-events: none; z-index: 10; opacity: 0.6;
     }
-    /* Audio Toggle Button */
-    .sound-btn {
-      position: absolute;
-      top: 14px;
-      right: 14px;
-      background: rgba(17, 5, 36, 0.95);
-      border: 1px solid #00f2fe;
-      color: #00f2fe;
-      padding: 8px 14px;
-      font-family: inherit;
-      font-size: 11px;
-      font-weight: bold;
-      letter-spacing: 1px;
-      cursor: pointer;
-      border-radius: 4px;
-      z-index: 50;
-      pointer-events: auto;
-      box-shadow: 0 0 10px rgba(0, 242, 254, 0.3);
-      transition: all 0.2s;
+
+    .action-bar { position: absolute; top: 16px; right: 16px; display: flex; gap: 10px; z-index: 50; }
+
+    .hud-btn {
+      background: var(--panel-bg); border: 1px solid var(--neon-cyan); color: var(--neon-cyan);
+      padding: 8px 14px; font-family: inherit; font-size: 11px; font-weight: 700;
+      letter-spacing: 1.5px; cursor: pointer; border-radius: 4px;
+      box-shadow: 0 0 12px rgba(0, 242, 254, 0.25); transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      backdrop-filter: blur(6px);
     }
-    .sound-btn:hover {
-      background: #00f2fe;
-      color: #04010a;
-      box-shadow: 0 0 15px rgba(0, 242, 254, 0.8);
-    }
-    /* Menus & Overlays */
+    .hud-btn:hover { background: var(--neon-cyan); color: #000; box-shadow: 0 0 20px var(--neon-cyan); }
+
     .menu-screen {
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(4, 1, 14, 0.94);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      border-radius: 8px;
-      z-index: 30;
-      pointer-events: auto;
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: var(--panel-bg); backdrop-filter: blur(10px);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      z-index: 30; transition: opacity 0.3s ease;
     }
-    /* Countdown Overlay */
-    .countdown-screen {
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(4, 1, 14, 0.65);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 8px;
-      z-index: 40;
-      pointer-events: none;
-    }
-    .countdown-text {
-      font-size: 75px;
-      font-weight: 900;
-      color: #00f2fe;
-      text-shadow: 0 0 25px #00f2fe, 0 0 50px rgba(0, 242, 254, 0.8);
-      letter-spacing: 6px;
-      pointer-events: none;
-      animation: popIn 0.85s ease-out forwards;
-    }
-    @keyframes popIn {
-      0% {
-        transform: scale(0.35);
-        opacity: 0;
-      }
-      50% {
-        transform: scale(1.15);
-        opacity: 1;
-      }
-      80% {
-        transform: scale(1.0);
-        opacity: 1;
-      }
-      100% {
-        transform: scale(0.9);
-        opacity: 0.1;
-      }
-    }
-    .hidden {
-      display: none !important;
-      pointer-events: none !important;
-    }
+    .hidden { display: none !important; opacity: 0; pointer-events: none !important; }
+
     h1 {
-      font-size: 38px;
-      color: #00f2fe;
-      text-shadow: 0 0 15px rgba(0, 242, 254, 0.8), 0 0 30px #00f2fe;
-      margin-bottom: 22px;
-      letter-spacing: 4px;
-      text-transform: uppercase;
+      font-size: 42px; color: var(--neon-cyan);
+      text-shadow: 0 0 15px rgba(0, 242, 254, 0.8), 0 0 35px var(--neon-cyan);
+      margin-bottom: 24px; letter-spacing: 5px; text-transform: uppercase; font-weight: 900;
     }
-    .form-group {
-      margin-bottom: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    label {
-      font-size: 13px;
-      letter-spacing: 2px;
-      margin-bottom: 8px;
-      color: #ff007f;
-    }
+
+    .form-group { margin-bottom: 20px; display: flex; flex-direction: column; align-items: center; }
+    label { font-size: 12px; letter-spacing: 2.5px; margin-bottom: 8px; color: var(--neon-magenta); font-weight: 700; }
     input[type="text"] {
-      background: #110524;
-      border: 2px solid #00f2fe;
-      padding: 10px 16px;
-      color: #fff;
-      font-family: inherit;
-      font-size: 16px;
-      border-radius: 4px;
-      outline: none;
-      text-align: center;
-      box-shadow: 0 0 10px rgba(0, 242, 254, 0.3);
-      width: 240px;
-      pointer-events: auto;
+      background: rgba(17, 5, 36, 0.8); border: 2px solid var(--neon-cyan); padding: 10px 16px;
+      color: #fff; font-family: inherit; font-size: 16px; border-radius: 4px; outline: none;
+      text-align: center; box-shadow: 0 0 14px rgba(0, 242, 254, 0.3); width: 250px; letter-spacing: 2px;
     }
-    .diff-group {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 25px;
-    }
+
+    .diff-group { display: flex; gap: 12px; margin-bottom: 28px; }
     .diff-btn {
-      background: #110524;
-      border: 1px solid #777;
-      color: #aaa;
-      padding: 8px 18px;
-      font-family: inherit;
-      cursor: pointer;
-      border-radius: 4px;
-      font-size: 13px;
-      pointer-events: auto;
-      transition: all 0.2s;
+      background: rgba(17, 5, 36, 0.6); border: 1px solid #555; color: #999;
+      padding: 8px 18px; font-family: inherit; cursor: pointer; border-radius: 4px;
+      font-size: 12px; letter-spacing: 1px; transition: all 0.2s;
     }
     .diff-btn.selected {
-      border-color: #ff007f;
-      color: #ff007f;
-      box-shadow: 0 0 12px rgba(255, 0, 127, 0.6);
-      font-weight: bold;
+      border-color: var(--neon-magenta); color: var(--neon-magenta);
+      box-shadow: 0 0 15px rgba(255, 0, 127, 0.6); font-weight: bold;
     }
-    .start-btn {
-      background: #ff007f;
-      border: none;
-      color: #fff;
-      font-family: inherit;
-      font-size: 16px;
-      font-weight: bold;
-      padding: 12px 36px;
-      cursor: pointer;
-      border-radius: 4px;
-      letter-spacing: 2px;
-      pointer-events: auto;
-      box-shadow: 0 0 20px rgba(255, 0, 127, 0.6);
-      transition: transform 0.1s, box-shadow 0.2s;
+
+    .primary-btn {
+      background: var(--neon-magenta); border: none; color: #fff; font-family: inherit;
+      font-size: 16px; font-weight: 900; padding: 14px 40px; cursor: pointer; border-radius: 4px;
+      letter-spacing: 3px; box-shadow: 0 0 25px rgba(255, 0, 127, 0.6);
+      transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
-    .start-btn:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 30px rgba(255, 0, 127, 0.9);
+    .primary-btn:hover { transform: scale(1.05); box-shadow: 0 0 35px rgba(255, 0, 127, 1); }
+
+    .legend { margin-top: 20px; font-size: 11px; color: #888; letter-spacing: 1px; text-align: center; line-height: 1.6; }
+
+    .countdown-overlay {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(4, 1, 14, 0.55); display: flex; align-items: center; justify-content: center;
+      z-index: 40; pointer-events: none;
     }
-    .legend {
-      margin-top: 15px;
-      font-size: 11px;
-      color: #888;
-      letter-spacing: 1px;
+    .countdown-text {
+      font-size: 80px; font-weight: 900; color: var(--neon-cyan);
+      text-shadow: 0 0 30px var(--neon-cyan); letter-spacing: 6px;
+      animation: popZoom 0.85s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    @keyframes popZoom {
+      0% { transform: scale(0.3); opacity: 0; }
+      50% { transform: scale(1.2); opacity: 1; }
+      80% { transform: scale(1.0); opacity: 1; }
+      100% { transform: scale(0.85); opacity: 0; }
     }
   </style>
 </head>
 <body>
 
   <div class="wrapper">
-    <!-- Sound Toggle -->
-    <button id="soundToggle" class="sound-btn" type="button">AUDIO: ON</button>
+    <div class="scanlines"></div>
 
-    <!-- COUNTDOWN OVERLAY -->
-    <div id="countdownScreen" class="countdown-screen hidden">
-      <div id="countdownText" class="countdown-text">THREE</div>
+    <div class="action-bar">
+      <button id="pauseBtn" class="hud-btn" type="button">PAUSE [P]</button>
+      <button id="soundToggle" class="hud-btn" type="button">AUDIO: ON</button>
     </div>
 
-    <!-- START SCREEN -->
+    <div id="countdownScreen" class="countdown-overlay hidden">
+      <div id="countdownText" class="countdown-text">READY</div>
+    </div>
+
     <div id="startScreen" class="menu-screen">
-      <h1>Cyber Pong Arena</h1>
+      <h1>CYBER PONG ARENA</h1>
       <div class="form-group">
-        <label for="playerName">ENTER PILOT CALLSIGN</label>
-        <input type="text" id="playerName" value="PLAYER 1" maxlength="10">
+        <label for="playerName">PILOT CALLSIGN</label>
+        <input type="text" id="playerName" value="COMMANDER" maxlength="12" spellcheck="false">
       </div>
       <div class="diff-group">
         <button class="diff-btn" data-diff="EASY" type="button">EASY</button>
         <button class="diff-btn selected" data-diff="MEDIUM" type="button">MEDIUM</button>
-        <button class="diff-btn" data-diff="HARD" type="button">HARD</button>
+        <button class="diff-btn" data-diff="HARD" type="button">INSANE</button>
       </div>
-      <button class="start-btn" id="startBtn" type="button">LAUNCH MATCH</button>
-      <div class="legend">Controls: [W] / [S] or [▲] / [▼] Arrow Keys</div>
+      <button class="primary-btn" id="startBtn" type="button">ENGAGE MATCH</button>
+      <div class="legend">
+        Controls: [W] / [S] or [▲] / [▼] Arrows<br>
+        Powerups: [⚡ OVERLOAD SPEED] &nbsp; [🛡️ SHIELD EXPANSION] &nbsp; [❄️ EMP STASIS]
+      </div>
     </div>
 
-    <!-- GAME OVER SCREEN -->
+    <div id="pauseScreen" class="menu-screen hidden">
+      <h1>MATCH SUSPENDED</h1>
+      <button class="primary-btn" id="resumeBtn" type="button">RESUME FLIGHT</button>
+    </div>
+
     <div id="gameOverScreen" class="menu-screen hidden">
       <h1 id="winnerText">VICTORY</h1>
-      <button class="start-btn" id="restartBtn" type="button">PLAY AGAIN</button>
+      <p id="matchStat" style="margin-bottom: 25px; color: #aaa; letter-spacing: 1.5px;"></p>
+      <button class="primary-btn" id="restartBtn" type="button">RE-ENGAGE</button>
     </div>
 
-    <!-- CANVAS -->
-    <canvas id="gameCanvas" width="850" height="520"></canvas>
+    <canvas id="gameCanvas" width="900" height="540"></canvas>
   </div>
 
   <script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-
-    // UI Hooks
-    const startScreen = document.getElementById('startScreen');
-    const gameOverScreen = document.getElementById('gameOverScreen');
-    const countdownScreen = document.getElementById('countdownScreen');
-    const countdownText = document.getElementById('countdownText');
-    const winnerText = document.getElementById('winnerText');
-    const playerNameInput = document.getElementById('playerName');
-    const startBtn = document.getElementById('startBtn');
-    const restartBtn = document.getElementById('restartBtn');
-    const diffButtons = document.querySelectorAll('.diff-btn');
-    const soundToggle = document.getElementById('soundToggle');
+    'use strict';
 
     // ========================================================
-    // SOFT & NATURAL FEMALE VOICE SYNTHESIS
+    // CONSTANTS & GAME TUNING
     // ========================================================
-    let cachedSoftVoice = null;
+    const VIRTUAL_WIDTH = 900;
+    const VIRTUAL_HEIGHT = 540;
+    const WINNING_SCORE = 7;
+    const FIXED_TIMESTEP = 1 / 60; 
 
-    function getSoftNaturalVoice() {
-      if (!('speechSynthesis' in window)) return null;
-      const voices = window.speechSynthesis.getVoices();
-      if (!voices || voices.length === 0) return null;
-
-      const preferred = [
-        'google uk english female',
-        'google us english',
-        'jenny natural',
-        'samantha',
-        'victoria',
-        'karen',
-        'fiona',
-        'serena',
-        'moira',
-        'zira',
-        'female'
-      ];
-
-      for (const query of preferred) {
-        const match = voices.find(v => v.lang.startsWith('en') && v.name.toLowerCase().includes(query));
-        if (match) return match;
-      }
-      return voices.find(v => v.lang.startsWith('en')) || voices[0];
-    }
-
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.onvoiceschanged = () => {
-        cachedSoftVoice = getSoftNaturalVoice();
-      };
-      cachedSoftVoice = getSoftNaturalVoice();
-    }
-
-    function speakSoftFemale(word) {
-      if (isMuted || !('speechSynthesis' in window)) return;
-      try {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(word);
-        if (!cachedSoftVoice) cachedSoftVoice = getSoftNaturalVoice();
-        if (cachedSoftVoice) utterance.voice = cachedSoftVoice;
-
-        utterance.pitch = 1.02;
-        utterance.rate = 0.88;
-        utterance.volume = 0.85;
-
-        window.speechSynthesis.speak(utterance);
-      } catch (e) {
-        console.warn('Speech synthesis unavailable:', e);
-      }
-    }
-
-    // ========================================================
-    // ORIGINAL 128 BPM EDM TRACK (FIRST BGM IMPLEMENTATION)
-    // ========================================================
-    let audioCtx = null;
-    let masterGain = null;
-    let isMuted = false;
-    let musicInterval = null;
-    let currentStep = 0;
-
-    const EDM_NOTES = {
-      A1: 55.0,  C2: 65.41, D2: 73.42, F2: 87.31,
-      A2: 110.0, C3: 130.81, D3: 146.83, E3: 164.81,
-      A3: 220.0, C4: 261.63, D4: 293.66, E4: 329.63, G4: 392.00, A4: 440.0
+    const CONFIG = {
+      paddles: { width: 18, height: 82, playerBaseSpeed: 440, playerBoostedSpeed: 680, expandedHeight: 130, wallPadding: 32 },
+      difficulty: {
+        EASY:   { ballInitSpeed: 380, aiSpeed: 280, maxBallSpeed: 700, aiErrorFactor: 24 },
+        MEDIUM: { ballInitSpeed: 450, aiSpeed: 390, maxBallSpeed: 880, aiErrorFactor: 12 },
+        HARD:   { ballInitSpeed: 520, aiSpeed: 490, maxBallSpeed: 1080, aiErrorFactor: 0 }
+      },
+      powerUps: [
+        { type: 'SPEED',  label: 'SPEED BOOST', color: '#ffb703', icon: '⚡', duration: 7 },
+        { type: 'LENGTH', label: 'SHIELD EXPAND', color: '#06d6a0', icon: '🛡️', duration: 7 },
+        { type: 'FREEZE', label: 'EMP STASIS',   color: '#00f2fe', icon: '❄️', duration: 4.5 }
+      ]
     };
 
-    // 16-step original rolling bass & lead sequences
-    const BASS_LINE = [
-      EDM_NOTES.A1, EDM_NOTES.A1, EDM_NOTES.A2, EDM_NOTES.A1,
-      EDM_NOTES.F2, EDM_NOTES.F2, EDM_NOTES.A2, EDM_NOTES.F2,
-      EDM_NOTES.D2, EDM_NOTES.D2, EDM_NOTES.A2, EDM_NOTES.D2,
-      EDM_NOTES.C2, EDM_NOTES.C2, EDM_NOTES.E3, EDM_NOTES.C2
-    ];
+    // ========================================================
+    // AUDIO ENGINE (Web Audio API Synthesizer & Voice TTS)
+    // ========================================================
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+        this.masterGain = null;
+        this.isMuted = false;
 
-    const LEAD_LINE = [
-      EDM_NOTES.A3, EDM_NOTES.C4, EDM_NOTES.E4, EDM_NOTES.A4,
-      EDM_NOTES.G4, EDM_NOTES.E4, EDM_NOTES.C4, EDM_NOTES.D4,
-      EDM_NOTES.F2, EDM_NOTES.A3, EDM_NOTES.D4, EDM_NOTES.E4,
-      EDM_NOTES.C4, EDM_NOTES.E4, EDM_NOTES.A4, EDM_NOTES.G4
-    ];
-
-    function initAudio() {
-      if (!audioCtx) {
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContextClass) return;
-        audioCtx = new AudioContextClass();
-
-        masterGain = audioCtx.createGain();
-        masterGain.gain.setValueAtTime(0.22, audioCtx.currentTime);
-        masterGain.connect(audioCtx.destination);
+        // Procedural Synthesizer Settings
+        this.stepIndex = 0;
+        this.nextNoteTime = 0;
+        this.timerID = null;
+        this.tempo = 126;
+        
+        // 16-step bassline sequence
+        this.bassNotes = [
+          55.0, 55.0, 110.0, 55.0, 
+          87.31, 87.31, 110.0, 87.31, 
+          73.42, 73.42, 110.0, 73.42, 
+          65.41, 65.41, 130.81, 65.41
+        ];
+        
+        // Voice Synthesis Setup
+        this.synth = window.speechSynthesis;
+        this.voice = null;
+        if (this.synth) {
+          this.synth.onvoiceschanged = () => this.loadVoice();
+          this.loadVoice();
+        }
       }
-      if (audioCtx && audioCtx.state === 'suspended') {
-        audioCtx.resume();
+
+      loadVoice() {
+        if (!this.synth) return;
+        const voices = this.synth.getVoices();
+        const preferred = ['google uk english female', 'google us english', 'jenny natural', 'samantha', 'victoria', 'female'];
+        for (const query of preferred) {
+          const match = voices.find(v => v.lang.startsWith('en') && v.name.toLowerCase().includes(query));
+          if (match) { this.voice = match; return; }
+        }
+        this.voice = voices.find(v => v.lang.startsWith('en')) || voices[0];
       }
-    }
 
-    function stopEDMTrack() {
-      if (musicInterval) {
-        clearInterval(musicInterval);
-        musicInterval = null;
+      speak(text) {
+        if (this.isMuted || !this.synth) return;
+        this.synth.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        if (this.voice) utterance.voice = this.voice;
+        utterance.pitch = 1.02; utterance.rate = 0.88; utterance.volume = 0.95;
+        this.synth.speak(utterance);
       }
-    }
 
-    function playKick(time) {
-      if (isMuted || !audioCtx) return;
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.frequency.setValueAtTime(140, time);
-      osc.frequency.exponentialRampToValueAtTime(32, time + 0.08);
-      gain.gain.setValueAtTime(0.7, time);
-      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.12);
-      osc.connect(gain);
-      gain.connect(masterGain);
-      osc.start(time);
-      osc.stop(time + 0.12);
-    }
-
-    function playSynthTone(freq, time, duration, type = 'sawtooth', volume = 0.15) {
-      if (isMuted || !audioCtx) return;
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      const filter = audioCtx.createBiquadFilter();
-
-      osc.type = type;
-      osc.frequency.setValueAtTime(freq, time);
-
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(1800, time);
-      filter.frequency.exponentialRampToValueAtTime(450, time + duration);
-
-      gain.gain.setValueAtTime(volume, time);
-      gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
-
-      osc.connect(filter);
-      filter.connect(gain);
-      gain.connect(masterGain);
-
-      osc.start(time);
-      osc.stop(time + duration);
-    }
-
-    function playHiHat(time) {
-      if (isMuted || !audioCtx) return;
-      const bufferSize = audioCtx.sampleRate * 0.03;
-      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-      const output = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) {
-        output[i] = Math.random() * 2 - 1;
-      }
-      const whiteNoise = audioCtx.createBufferSource();
-      whiteNoise.buffer = buffer;
-
-      const filter = audioCtx.createBiquadFilter();
-      filter.type = 'highpass';
-      filter.frequency.setValueAtTime(7500, time);
-
-      const gain = audioCtx.createGain();
-      gain.gain.setValueAtTime(0.08, time);
-      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.03);
-
-      whiteNoise.connect(filter);
-      filter.connect(gain);
-      gain.connect(masterGain);
-
-      whiteNoise.start(time);
-      whiteNoise.stop(time + 0.03);
-    }
-
-    function startEDMTrack() {
-      initAudio();
-      stopEDMTrack();
-      const stepDuration = (60 / 128) / 4 * 1000;
-
-      musicInterval = setInterval(() => {
-        if (!isGameRunning || !audioCtx) return;
-        const now = audioCtx.currentTime;
-
-        if (currentStep % 4 === 0) playKick(now);
-        if (currentStep % 4 === 2) playHiHat(now);
-
-        const bassFreq = BASS_LINE[currentStep % 16];
-        playSynthTone(bassFreq, now, 0.12, 'sawtooth', 0.22);
-
-        const leadFreq = LEAD_LINE[currentStep % 16];
-        playSynthTone(leadFreq, now + 0.01, 0.1, 'square', 0.1);
-
-        currentStep = (currentStep + 1) % 16;
-      }, stepDuration);
-    }
-
-    function playSfx(freq, type = 'sine', duration = 0.09) {
-      if (isMuted || !audioCtx) return;
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = type;
-      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-      gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-      osc.connect(gain);
-      gain.connect(masterGain);
-      osc.start();
-      osc.stop(audioCtx.currentTime + duration);
-    }
-
-    // ==========================================
-    // COUNTDOWN SEQUENCE
-    // ==========================================
-    function runCountdown(onComplete) {
-      countdownScreen.classList.remove('hidden');
-      const sequence = [
-        { text: 'THREE', color: '#00f2fe', sfx: 440 },
-        { text: 'TWO',   color: '#00f2fe', sfx: 554 },
-        { text: 'ONE',   color: '#ffb703', sfx: 659 },
-        { text: 'GO!',   color: '#ff007f', sfx: 880 }
-      ];
-
-      let idx = 0;
-      function showNext() {
-        if (idx >= sequence.length) {
-          countdownScreen.classList.add('hidden');
-          onComplete();
+      init() {
+        if (this.ctx) {
+          if (this.ctx.state === 'suspended') this.ctx.resume();
           return;
         }
-
-        const step = sequence[idx];
-        countdownText.textContent = step.text;
-        countdownText.style.color = step.color;
-        countdownText.style.textShadow = `0 0 25px ${step.color}, 0 0 50px ${step.color}`;
-
-        countdownText.style.animation = 'none';
-        void countdownText.offsetWidth;
-        countdownText.style.animation = 'popIn 0.85s ease-out forwards';
-
-        speakSoftFemale(step.text.replace('!', ''));
-        playSfx(step.sfx, 'sine', 0.12);
-
-        idx++;
-        setTimeout(showNext, 1000);
+        const AudioClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioClass) return;
+        this.ctx = new AudioClass();
+        this.masterGain = this.ctx.createGain();
+        this.masterGain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+        this.masterGain.connect(this.ctx.destination);
       }
 
-      showNext();
+      toggleMute() {
+        this.isMuted = !this.isMuted;
+        if (this.masterGain && this.ctx) {
+          this.masterGain.gain.setValueAtTime(this.isMuted ? 0 : 0.25, this.ctx.currentTime);
+        }
+        if (this.isMuted && this.synth) this.synth.cancel();
+        return this.isMuted;
+      }
+
+      playTone(freq, type, duration, gainVal = 0.15, pitchDrop = true) {
+        if (!this.ctx || this.isMuted) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = type; osc.frequency.setValueAtTime(freq, now);
+        if (pitchDrop) osc.frequency.exponentialRampToValueAtTime(Math.max(10, freq * 0.4), now + duration);
+
+        gain.gain.setValueAtTime(gainVal, now);
+        gain.gain.linearRampToValueAtTime(0.0001, now + duration);
+
+        osc.connect(gain); gain.connect(this.masterGain);
+        osc.start(now); osc.stop(now + duration);
+      }
+
+      playPaddleHit(isPlayer) { this.playTone(isPlayer ? 580 : 420, 'square', 0.08, 0.18, false); }
+      playWallHit() { this.playTone(280, 'sine', 0.06, 0.14, false); }
+      playScore() { this.playTone(880, 'triangle', 0.25, 0.25, true); }
+      
+      playPowerup() {
+        if (!this.ctx || this.isMuted) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
+        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(320, now);
+        osc.frequency.exponentialRampToValueAtTime(1100, now + 0.22);
+        gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0.0001, now + 0.22);
+        osc.connect(gain); gain.connect(this.masterGain);
+        osc.start(now); osc.stop(now + 0.22);
+      }
+
+      // Procedural Web Audio API Background Music Sequencer
+      startBGM() {
+        this.init();
+        this.stopBGM();
+        if (!this.ctx || this.isMuted) return;
+        this.nextNoteTime = this.ctx.currentTime + 0.05;
+        this.stepIndex = 0;
+        this.scheduler();
+      }
+
+      stopBGM() {
+        if (this.timerID) {
+          clearTimeout(this.timerID);
+          this.timerID = null;
+        }
+      }
+
+      scheduler() {
+        if (!this.ctx) return;
+        // Schedule audio slightly ahead of time to guarantee smooth playback
+        while (this.nextNoteTime < this.ctx.currentTime + 0.1) {
+          this.schedulePattern(this.stepIndex, this.nextNoteTime);
+          const secondsPerStep = (60 / this.tempo) / 4;
+          this.nextNoteTime += secondsPerStep;
+          this.stepIndex = (this.stepIndex + 1) % 16;
+        }
+        this.timerID = setTimeout(() => this.scheduler(), 35);
+      }
+
+      schedulePattern(step, time) {
+        if (this.isMuted || !this.ctx) return;
+
+        // Kick Drum (on every beat)
+        if (step % 4 === 0) {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.frequency.setValueAtTime(130, time);
+          osc.frequency.exponentialRampToValueAtTime(30, time + 0.09);
+          gain.gain.setValueAtTime(0.6, time);
+          gain.gain.linearRampToValueAtTime(0.0001, time + 0.1);
+          osc.connect(gain); gain.connect(this.masterGain);
+          osc.start(time); osc.stop(time + 0.1);
+        }
+
+        // Rolling Bass Synth
+        const bassFreq = this.bassNotes[step];
+        const bOsc = this.ctx.createOscillator();
+        const bGain = this.ctx.createGain();
+        const bFilter = this.ctx.createBiquadFilter();
+
+        bOsc.type = 'sawtooth'; bOsc.frequency.setValueAtTime(bassFreq, time);
+        bFilter.type = 'lowpass'; bFilter.frequency.setValueAtTime(1200, time);
+        bFilter.frequency.exponentialRampToValueAtTime(350, time + 0.12);
+
+        bGain.gain.setValueAtTime(0.18, time); bGain.gain.linearRampToValueAtTime(0.0001, time + 0.12);
+
+        bOsc.connect(bFilter); bFilter.connect(bGain); bGain.connect(this.masterGain);
+        bOsc.start(time); bOsc.stop(time + 0.12);
+
+        // Hi-Hat (on off-beats)
+        if (step % 4 === 2) {
+          const bufferSize = this.ctx.sampleRate * 0.035;
+          const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+          const data = buffer.getChannelData(0);
+          for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+          const noise = this.ctx.createBufferSource(); noise.buffer = buffer;
+          const filter = this.ctx.createBiquadFilter(); filter.type = 'highpass'; filter.frequency.setValueAtTime(8000, time);
+          const hGain = this.ctx.createGain(); hGain.gain.setValueAtTime(0.07, time); hGain.gain.linearRampToValueAtTime(0.0001, time + 0.035);
+
+          noise.connect(filter); filter.connect(hGain); hGain.connect(this.masterGain);
+          noise.start(time); noise.stop(time + 0.035);
+        }
+      }
     }
 
-    soundToggle.addEventListener('click', (e) => {
-      e.stopPropagation();
-      initAudio();
-      isMuted = !isMuted;
-      soundToggle.textContent = isMuted ? 'AUDIO: OFF' : 'AUDIO: ON';
-      soundToggle.style.color = isMuted ? '#888' : '#00f2fe';
-      soundToggle.style.borderColor = isMuted ? '#777' : '#00f2fe';
-    });
-
-    // ==========================================
-    // GAME CORE
-    // ==========================================
-    const DIFFICULTIES = {
-      EASY: { ballSpeed: 5, aiSpeed: 3.6, maxBallSpeed: 10 },
-      MEDIUM: { ballSpeed: 6.5, aiSpeed: 5.2, maxBallSpeed: 13.5 },
-      HARD: { ballSpeed: 8, aiSpeed: 6.8, maxBallSpeed: 16.5 }
-    };
-    let currentDifficulty = 'MEDIUM';
-    let playerName = 'PLAYER 1';
-    let isGameRunning = false;
-
-    const BLADE_WIDTH = 18;
-    const BLADE_BASE_HEIGHT = 80;
-    const BASE_PLAYER_SPEED = 7;
-
-    const player = {
-      x: 35,
-      y: 0,
-      w: BLADE_WIDTH,
-      h: BLADE_BASE_HEIGHT,
-      speed: BASE_PLAYER_SPEED,
-      score: 0,
-      powerTimer: 0,
-      angle: 0,
-      rubberColor: '#ff0055',
-      woodColor: '#d4a373',
-      handleColor: '#1d3557'
-    };
-
-    const ai = {
-      x: 0,
-      y: 0,
-      w: BLADE_WIDTH,
-      h: BLADE_BASE_HEIGHT,
-      speed: 5.2,
-      score: 0,
-      freezeTimer: 0,
-      angle: 0,
-      rubberColor: '#1a1a24',
-      woodColor: '#d4a373',
-      handleColor: '#3a0ca3'
-    };
-
-    let ball = {
-      x: 0,
-      y: 0,
-      r: 7,
-      speed: 6.5,
-      dx: 6.5,
-      dy: 0,
-      trail: []
-    };
-
-    let powerUp = null;
-    const POWER_TYPES = [
-      { type: 'SPEED', color: '#ffb703', symbol: '⚡' },
-      { type: 'LENGTH', color: '#06d6a0', symbol: '🛡️' },
-      { type: 'FREEZE', color: '#118ab2', symbol: '❄️' }
-    ];
-
-    let floatingTexts = [];
-    let particles = [];
-    const keys = {};
-
-    window.addEventListener('keydown', (e) => { keys[e.key] = true; });
-    window.addEventListener('keyup', (e) => { keys[e.key] = false; });
-
-    diffButtons.forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        diffButtons.forEach(b => b.classList.remove('selected'));
-        btn.classList.add('selected');
-        currentDifficulty = btn.dataset.diff;
-      });
-    });
-
-    startBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      initMatchCountdown();
-    });
-
-    restartBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      initMatchCountdown();
-    });
-
-    function initMatchCountdown() {
-      initAudio();
-      stopEDMTrack();
-
-      playerName = playerNameInput.value.trim().toUpperCase() || 'PLAYER 1';
-      player.score = 0;
-      ai.score = 0;
-      player.h = BLADE_BASE_HEIGHT;
-      player.speed = BASE_PLAYER_SPEED;
-      player.angle = 0;
-
-      ai.h = BLADE_BASE_HEIGHT;
-      ai.speed = DIFFICULTIES[currentDifficulty].aiSpeed;
-      ai.angle = 0;
-
-      player.y = (canvas.height - player.h) / 2;
-      ai.x = canvas.width - 35 - BLADE_WIDTH;
-      ai.y = (canvas.height - ai.h) / 2;
-
-      ball.x = canvas.width / 2;
-      ball.y = canvas.height / 2;
-      ball.dx = 0;
-      ball.dy = 0;
-      ball.trail = [];
-      powerUp = null;
-      floatingTexts = [];
-
-      startScreen.classList.add('hidden');
-      gameOverScreen.classList.add('hidden');
-      isGameRunning = false;
-
-      runCountdown(() => {
-        isGameRunning = true;
-        startEDMTrack();
-        resetBall(true);
-      });
-    }
-
-    function spawnPowerUp() {
-      const typeObj = POWER_TYPES[Math.floor(Math.random() * POWER_TYPES.length)];
-      powerUp = {
-        x: canvas.width / 4 + Math.random() * (canvas.width / 2),
-        y: 50 + Math.random() * (canvas.height - 100),
-        size: 22,
-        ...typeObj
-      };
-    }
-
-    function spawnFloatingText(text, x, y, color = '#00f2fe') {
-      floatingTexts.push({
-        text: text,
-        x: x,
-        y: y,
-        color: color,
-        life: 1.0,
-        vy: -1.2
-      });
-    }
-
-    function spawnParticles(x, y, color) {
-      for (let i = 0; i < 16; i++) {
-        particles.push({
-          x: x,
-          y: y,
-          vx: (Math.random() - 0.5) * 7,
-          vy: (Math.random() - 0.5) * 7,
-          life: 1.0,
-          color: color
+    // ========================================================
+    // INPUT CONTROLLER
+    // ========================================================
+    class InputHandler {
+      constructor() {
+        this.keys = new Set();
+        window.addEventListener('keydown', (e) => {
+          if (['ArrowUp', 'ArrowDown', ' ', 'w', 'W', 's', 'S', 'p', 'P'].includes(e.key)) e.preventDefault();
+          this.keys.add(e.key.toLowerCase());
         });
+        window.addEventListener('keyup', (e) => this.keys.delete(e.key.toLowerCase()));
       }
+      isDown(key) { return this.keys.has(key.toLowerCase()); }
     }
 
-    function resetBall(serveToPlayer) {
-      ball.x = canvas.width / 2;
-      ball.y = canvas.height / 2;
-      ball.speed = DIFFICULTIES[currentDifficulty].ballSpeed;
-      ball.trail = [];
-
-      const dir = serveToPlayer ? -1 : 1;
-      const angle = (Math.random() * (Math.PI / 4)) - (Math.PI / 8);
-
-      ball.dx = dir * ball.speed * Math.cos(angle);
-      ball.dy = ball.speed * Math.sin(angle);
-
-      if (!powerUp && Math.random() > 0.45) {
-        spawnPowerUp();
-      }
-    }
-
-    function checkCollision(b, p) {
-      const closeX = Math.max(p.x, Math.min(b.x, p.x + p.w));
-      const closeY = Math.max(p.y, Math.min(b.y, p.y + p.h));
-      const dx = b.x - closeX;
-      const dy = b.y - closeY;
-      return (dx * dx + dy * dy) <= (b.r * b.r);
-    }
-
-    function bouncePaddle(p, dir, color) {
-      const center = p.y + (p.h / 2);
-      let offset = (ball.y - center) / (p.h / 2);
-      offset = Math.max(-1, Math.min(1, offset));
-
-      const bounceAngle = offset * (Math.PI / 3.8);
-      ball.speed = Math.min(ball.speed + 0.4, DIFFICULTIES[currentDifficulty].maxBallSpeed);
-
-      ball.dx = dir * ball.speed * Math.cos(bounceAngle);
-      ball.dy = ball.speed * Math.sin(bounceAngle);
-
-      if (dir === 1) ball.x = p.x + p.w + ball.r;
-      else ball.x = p.x - ball.r;
-
-      playSfx(520, 'square', 0.08);
-      spawnParticles(ball.x, ball.y, color);
-    }
-
-    function update() {
-      if (!isGameRunning) return;
-
-      if (player.powerTimer > 0) {
-        player.powerTimer--;
-        if (player.powerTimer === 0) {
-          player.speed = BASE_PLAYER_SPEED;
-          player.h = BLADE_BASE_HEIGHT;
+    // ========================================================
+    // PARTICLE & FLOATING TEXT ENGINE
+    // ========================================================
+    class FXEngine {
+      constructor() { this.particles = []; this.floatingTexts = []; this.screenShake = 0; }
+      triggerShake(amount = 8) { this.screenShake = Math.max(this.screenShake, amount); }
+      
+      emitParticles(x, y, color, count = 16, maxSpeed = 220) {
+        for (let i = 0; i < count; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = (Math.random() * 0.7 + 0.3) * maxSpeed;
+          this.particles.push({
+            x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+            size: Math.random() * 3 + 2, color, life: 1.0, decay: Math.random() * 1.5 + 1.2
+          });
         }
       }
 
-      if (ai.freezeTimer > 0) {
-        ai.freezeTimer--;
+      spawnFloatingText(text, x, y, color = '#00f2fe') {
+        this.floatingTexts.push({ text, x, y, color, life: 1.0, vy: -80 });
       }
 
-      let targetPlayerAngle = 0;
-      if (keys['w'] || keys['W'] || keys['ArrowUp']) {
-        player.y -= player.speed;
-        targetPlayerAngle = -0.15;
-      }
-      if (keys['s'] || keys['S'] || keys['ArrowDown']) {
-        player.y += player.speed;
-        targetPlayerAngle = 0.15;
-      }
-      player.angle += (targetPlayerAngle - player.angle) * 0.2;
-      player.y = Math.max(10, Math.min(canvas.height - player.h - 10, player.y));
-
-      const activeAiSpeed = ai.freezeTimer > 0 ? DIFFICULTIES[currentDifficulty].aiSpeed * 0.35 : DIFFICULTIES[currentDifficulty].aiSpeed;
-      const aiCenter = ai.y + (ai.h / 2);
-      let targetAiAngle = 0;
-
-      if (ball.y < aiCenter - 10) {
-        ai.y -= activeAiSpeed;
-        targetAiAngle = -0.12;
-      } else if (ball.y > aiCenter + 10) {
-        ai.y += activeAiSpeed;
-        targetAiAngle = 0.12;
-      }
-      ai.angle += (targetAiAngle - ai.angle) * 0.15;
-      ai.y = Math.max(10, Math.min(canvas.height - ai.h - 10, ai.y));
-
-      ball.trail.push({ x: ball.x, y: ball.y });
-      if (ball.trail.length > 8) ball.trail.shift();
-
-      ball.x += ball.dx;
-      ball.y += ball.dy;
-
-      // Wall Bounces
-      if (ball.y - ball.r <= 0) {
-        ball.y = ball.r;
-        ball.dy = -ball.dy;
-        playSfx(240, 'sine', 0.06);
-        spawnParticles(ball.x, ball.y, '#ffffff');
-      } else if (ball.y + ball.r >= canvas.height) {
-        ball.y = canvas.height - ball.r;
-        ball.dy = -ball.dy;
-        playSfx(240, 'sine', 0.06);
-        spawnParticles(ball.x, ball.y, '#ffffff');
+      update(dt) {
+        if (this.screenShake > 0) this.screenShake = Math.max(0, this.screenShake - dt * 25);
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+          const p = this.particles[i];
+          p.x += p.vx * dt; p.y += p.vy * dt; p.life -= p.decay * dt;
+          if (p.life <= 0) this.particles.splice(i, 1);
+        }
+        for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
+          const ft = this.floatingTexts[i];
+          ft.y += ft.vy * dt; ft.life -= dt * 1.4;
+          if (ft.life <= 0) this.floatingTexts.splice(i, 1);
+        }
       }
 
-      if (ball.dx < 0 && checkCollision(ball, player)) bouncePaddle(player, 1, '#ff0055');
-      if (ball.dx > 0 && checkCollision(ball, ai)) bouncePaddle(ai, -1, '#00f2fe');
+      render(ctx) {
+        ctx.save(); ctx.globalCompositeOperation = 'lighter';
+        for (const p of this.particles) {
+          ctx.fillStyle = p.color; ctx.globalAlpha = Math.max(0, p.life); ctx.fillRect(p.x, p.y, p.size, p.size);
+        }
+        ctx.restore();
 
-      // Power-Up Pickup
-      if (powerUp) {
-        const dx = ball.x - (powerUp.x + powerUp.size / 2);
-        const dy = ball.y - (powerUp.y + powerUp.size / 2);
-        if (Math.sqrt(dx * dx + dy * dy) < ball.r + powerUp.size / 2) {
-          if (powerUp.type === 'SPEED') {
-            player.speed = BASE_PLAYER_SPEED + 4;
-            player.powerTimer = 360;
-          } else if (powerUp.type === 'LENGTH') {
-            player.h = BLADE_BASE_HEIGHT + 45;
-            player.powerTimer = 360;
-          } else if (powerUp.type === 'FREEZE') {
-            ai.freezeTimer = 220;
+        for (const ft of this.floatingTexts) {
+          ctx.save(); ctx.font = "bold 16px 'Courier New', monospace"; ctx.textAlign = 'center';
+          ctx.fillStyle = ft.color; ctx.shadowColor = ft.color; ctx.shadowBlur = 12;
+          ctx.globalAlpha = Math.max(0, ft.life); ctx.fillText(ft.text, ft.x, ft.y); ctx.restore();
+        }
+      }
+    }
+
+    // ========================================================
+    // PADDLE & BALL ENTITIES
+    // ========================================================
+    class Paddle {
+      constructor(x, isPlayer) {
+        this.x = x; this.w = CONFIG.paddles.width; this.h = CONFIG.paddles.height;
+        this.y = (VIRTUAL_HEIGHT - this.h) / 2;
+        this.isPlayer = isPlayer; this.score = 0; this.angle = 0;
+        this.powerTimer = 0; this.freezeTimer = 0; this.activePower = null;
+      }
+      reset() {
+        this.h = CONFIG.paddles.height; this.y = (VIRTUAL_HEIGHT - this.h) / 2;
+        this.powerTimer = 0; this.freezeTimer = 0; this.activePower = null; this.angle = 0;
+      }
+      applyPower(type, duration) {
+        this.activePower = type; this.powerTimer = duration;
+        if (type === 'LENGTH') { const prevH = this.h; this.h = CONFIG.paddles.expandedHeight; this.y -= (this.h - prevH) / 2; }
+      }
+      update(dt, input, ball, difficulty) {
+        if (this.powerTimer > 0) {
+          this.powerTimer -= dt;
+          if (this.powerTimer <= 0) { this.h = CONFIG.paddles.height; this.activePower = null; }
+        }
+        if (this.freezeTimer > 0) this.freezeTimer -= dt;
+
+        let targetAngle = 0;
+
+        if (this.isPlayer) {
+          let speed = this.activePower === 'SPEED' ? CONFIG.paddles.playerBoostedSpeed : CONFIG.paddles.playerBaseSpeed;
+          if (this.freezeTimer > 0) speed *= 0.35;
+
+          if (input.isDown('w') || input.isDown('arrowup')) { this.y -= speed * dt; targetAngle = -0.15; }
+          if (input.isDown('s') || input.isDown('arrowdown')) { this.y += speed * dt; targetAngle = 0.15; }
+        } else {
+          let aiSpeed = difficulty.aiSpeed;
+          if (this.freezeTimer > 0) aiSpeed *= 0.35;
+          const paddleCenter = this.y + this.h / 2;
+          const targetY = ball.y + (Math.sin(Date.now() * 0.003) * difficulty.aiErrorFactor);
+
+          if (Math.abs(targetY - paddleCenter) > 12) {
+            if (targetY < paddleCenter) { this.y -= aiSpeed * dt; targetAngle = -0.12; }
+            else { this.y += aiSpeed * dt; targetAngle = 0.12; }
           }
-
-          // Announce with soft female voice & floating neon text
-          speakSoftFemale("Power up!");
-          spawnFloatingText("POWER UP!", powerUp.x + powerUp.size / 2, powerUp.y, powerUp.color);
-
-          playSfx(880, 'triangle', 0.25);
-          spawnParticles(powerUp.x, powerUp.y, powerUp.color);
-          powerUp = null;
         }
+        this.y = Math.max(12, Math.min(VIRTUAL_HEIGHT - this.h - 12, this.y));
+        this.angle += (targetAngle - this.angle) * (15 * dt);
       }
-
-      // Scoring
-      if (ball.x + ball.r < 0) {
-        ai.score++;
-        playSfx(140, 'sawtooth', 0.3);
-        checkWinCondition();
-        if (isGameRunning) resetBall(false);
-      } else if (ball.x - ball.r > canvas.width) {
-        player.score++;
-        playSfx(660, 'sine', 0.2);
-        checkWinCondition();
-        if (isGameRunning) resetBall(true);
-      }
-
-      // Update Floating Texts
-      for (let i = floatingTexts.length - 1; i >= 0; i--) {
-        const ft = floatingTexts[i];
-        ft.y += ft.vy;
-        ft.life -= 0.02;
-        if (ft.life <= 0) floatingTexts.splice(i, 1);
-      }
-
-      // Update Particles
-      for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i];
-        p.x += p.vx;
-        p.y += p.vy;
-        p.life -= 0.03;
-        if (p.life <= 0) particles.splice(i, 1);
-      }
-    }
-
-    function checkWinCondition() {
-      const WIN_SCORE = 7;
-      if (player.score >= WIN_SCORE || ai.score >= WIN_SCORE) {
-        isGameRunning = false;
-        stopEDMTrack();
-        winnerText.textContent = player.score >= WIN_SCORE ? `${playerName} WINS!` : 'AI DOMINATION!';
-        winnerText.style.color = player.score >= WIN_SCORE ? '#00f2fe' : '#ff007f';
-        gameOverScreen.classList.remove('hidden');
-      }
-    }
-
-    function drawTableTennisBat(bat, isLeft) {
-      ctx.save();
-      const centerX = bat.x + bat.w / 2;
-      const centerY = bat.y + bat.h / 2;
-      ctx.translate(centerX, centerY);
-      ctx.rotate(bat.angle);
-
-      const radiusX = bat.w / 2;
-      const radiusY = bat.h / 2;
-
-      // Handle
-      const hw = 12;
-      const hh = 26;
-      const hx = isLeft ? -radiusX - hw : radiusX;
-      const hy = -hh / 2;
-      ctx.fillStyle = bat.handleColor;
-      ctx.fillRect(hx, hy, hw, hh);
-
-      // Grip Stripe
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(hx + 3, hy + 6);
-      ctx.lineTo(hx + hw - 3, hy + 6);
-      ctx.moveTo(hx + 3, hy + hh - 6);
-      ctx.lineTo(hx + hw - 3, hy + hh - 6);
-      ctx.stroke();
-
-      // Wood Blade Edge
-      ctx.beginPath();
-      ctx.ellipse(0, 0, radiusX + 2, radiusY + 2, 0, 0, Math.PI * 2);
-      ctx.fillStyle = bat.woodColor;
-      ctx.fill();
-
-      // Rubber Face
-      ctx.beginPath();
-      ctx.ellipse(0, 0, radiusX, radiusY, 0, 0, Math.PI * 2);
-      ctx.fillStyle = bat.rubberColor;
-      ctx.fill();
-
-      // Specular highlight
-      ctx.beginPath();
-      ctx.ellipse(-radiusX * 0.3, -radiusY * 0.3, radiusX * 0.4, radiusY * 0.5, -Math.PI / 6, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.14)';
-      ctx.fill();
-
-      // Active Power Glow
-      if (bat === player && player.powerTimer > 0) {
-        ctx.strokeStyle = '#ffb703';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.ellipse(0, 0, radiusX + 4, radiusY + 4, 0, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-
-      ctx.restore();
-    }
-
-    function render() {
-      ctx.fillStyle = '#020008';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Center Divider Net
-      ctx.strokeStyle = '#221133';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([8, 8]);
-      ctx.beginPath();
-      ctx.moveTo(canvas.width / 2, 0);
-      ctx.lineTo(canvas.width / 2, canvas.height);
-      ctx.stroke();
-      ctx.setLineDash([]);
-
-      // Top Labels
-      ctx.font = "12px 'Courier New', monospace";
-      ctx.fillStyle = '#ff007f';
-      ctx.textAlign = 'left';
-      ctx.fillText(playerName, 35, 30);
-
-      ctx.fillStyle = '#00f2fe';
-      ctx.textAlign = 'right';
-      ctx.fillText(`AI [${currentDifficulty}]`, canvas.width - 35, 30);
-
-      // Scores
-      ctx.font = "bold 44px 'Courier New', monospace";
-      ctx.textAlign = 'center';
-      ctx.fillStyle = '#ff007f';
-      ctx.fillText(player.score, canvas.width / 4, 75);
-      ctx.fillStyle = '#00f2fe';
-      ctx.fillText(ai.score, (canvas.width / 4) * 3, 75);
-
-      // Power-Up Item
-      if (powerUp) {
-        ctx.fillStyle = powerUp.color;
-        ctx.fillRect(powerUp.x, powerUp.y, powerUp.size, powerUp.size);
-        ctx.font = '14px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText(powerUp.symbol, powerUp.x + powerUp.size / 2, powerUp.y + 16);
-      }
-
-      // Ball Trail
-      for (let i = 0; i < ball.trail.length; i++) {
-        const pt = ball.trail[i];
-        const alpha = (i + 1) / ball.trail.length * 0.3;
-        ctx.fillStyle = `rgba(0, 242, 254, ${alpha})`;
-        ctx.beginPath();
-        ctx.arc(pt.x, pt.y, ball.r * ((i + 1) / ball.trail.length), 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      // Ball
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Render Bats
-      drawTableTennisBat(player, true);
-      drawTableTennisBat(ai, false);
-
-      // Floating "POWER UP!" Text FX
-      for (let i = 0; i < floatingTexts.length; i++) {
-        const ft = floatingTexts[i];
+      render(ctx) {
         ctx.save();
-        ctx.font = "bold 18px 'Courier New', monospace";
-        ctx.textAlign = 'center';
-        ctx.fillStyle = ft.color;
-        ctx.shadowColor = ft.color;
-        ctx.shadowBlur = 15;
-        ctx.globalAlpha = Math.max(0, ft.life);
-        ctx.fillText(ft.text, ft.x, ft.y);
+        const cx = this.x + this.w / 2; const cy = this.y + this.h / 2;
+        ctx.translate(cx, cy); ctx.rotate(this.angle);
+
+        const rx = this.w / 2; const ry = this.h / 2;
+        const hw = 12; const hh = 26;
+        const hx = this.isPlayer ? -rx - hw : rx; const hy = -hh / 2;
+        
+        ctx.fillStyle = this.isPlayer ? '#1d3557' : '#3a0ca3'; ctx.fillRect(hx, hy, hw, hh);
+        ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1.5; ctx.beginPath();
+        ctx.moveTo(hx + 3, hy + 6); ctx.lineTo(hx + hw - 3, hy + 6);
+        ctx.moveTo(hx + 3, hy + hh - 6); ctx.lineTo(hx + hw - 3, hy + hh - 6); ctx.stroke();
+
+        ctx.beginPath(); ctx.ellipse(0, 0, rx + 2, ry + 2, 0, 0, Math.PI * 2); ctx.fillStyle = '#d4a373'; ctx.fill();
+        ctx.beginPath(); ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2); ctx.fillStyle = this.isPlayer ? '#ff0055' : '#111422'; ctx.fill();
+        ctx.beginPath(); ctx.ellipse(-rx * 0.3, -ry * 0.3, rx * 0.45, ry * 0.5, -Math.PI / 6, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.16)'; ctx.fill();
+
+        if (this.powerTimer > 0) {
+          ctx.strokeStyle = '#ffb703'; ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.ellipse(0, 0, rx + 5, ry + 5, 0, 0, Math.PI * 2); ctx.stroke();
+        }
+        if (this.freezeTimer > 0) {
+          ctx.strokeStyle = '#00f2fe'; ctx.lineWidth = 3; ctx.setLineDash([4, 4]);
+          ctx.beginPath(); ctx.ellipse(0, 0, rx + 8, ry + 8, 0, 0, Math.PI * 2); ctx.stroke();
+        }
         ctx.restore();
       }
+    }
 
-      // Impact Particles
-      for (let i = 0; i < particles.length; i++) {
-        const p = particles[i];
-        ctx.fillStyle = p.color;
-        ctx.globalAlpha = Math.max(0, p.life);
-        ctx.fillRect(p.x, p.y, 3, 3);
+    class Ball {
+      constructor() { this.r = 7; this.trail = []; this.reset(true, CONFIG.difficulty.MEDIUM); }
+      reset(serveToPlayer, difficulty) {
+        this.x = VIRTUAL_WIDTH / 2; this.y = VIRTUAL_HEIGHT / 2;
+        this.speed = difficulty.ballInitSpeed; this.trail = [];
+        const dir = serveToPlayer ? -1 : 1;
+        const angle = (Math.random() * (Math.PI / 4)) - (Math.PI / 8);
+        this.vx = dir * this.speed * Math.cos(angle); this.vy = this.speed * Math.sin(angle);
       }
-      ctx.globalAlpha = 1.0;
-
-      // Proof / Watermark at bottom right corner
-      ctx.save();
-      ctx.font = "10px 'Courier New', monospace";
-      ctx.textAlign = 'right';
-      ctx.fillStyle = 'rgba(0, 242, 254, 0.45)';
-      ctx.fillText("DEV: ARINJAY | @itsarinjay", canvas.width - 15, canvas.height - 12);
-      ctx.restore();
+      update(dt) {
+        this.trail.push({ x: this.x, y: this.y }); if (this.trail.length > 10) this.trail.shift();
+        this.x += this.vx * dt; this.y += this.vy * dt;
+      }
+      render(ctx) {
+        for (let i = 0; i < this.trail.length; i++) {
+          const pt = this.trail[i]; const progress = (i + 1) / this.trail.length;
+          ctx.fillStyle = `rgba(0, 242, 254, ${progress * 0.35})`;
+          ctx.beginPath(); ctx.arc(pt.x, pt.y, this.r * progress, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.save(); ctx.shadowColor = '#00f2fe'; ctx.shadowBlur = 14; ctx.fillStyle = '#ffffff';
+        ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+      }
     }
 
-    function loop() {
-      update();
-      render();
-      requestAnimationFrame(loop);
+    // ========================================================
+    // MAIN GAME ENGINE & STATE MACHINE
+    // ========================================================
+    class GameEngine {
+      constructor() {
+        this.canvas = document.getElementById('gameCanvas'); this.ctx = this.canvas.getContext('2d');
+        this.input = new InputHandler(); this.sound = new SoundEngine(); this.fx = new FXEngine();
+
+        this.state = 'MENU'; this.playerName = 'COMMANDER';
+        this.difficultyKey = 'MEDIUM'; this.difficulty = CONFIG.difficulty[this.difficultyKey];
+
+        this.player = new Paddle(CONFIG.paddles.wallPadding, true);
+        this.ai = new Paddle(VIRTUAL_WIDTH - CONFIG.paddles.wallPadding - CONFIG.paddles.width, false);
+        this.ball = new Ball();
+        this.powerUp = null; this.powerUpSpawnCooldown = 3.0;
+
+        this.lastTime = performance.now(); this.accumulator = 0;
+        this.initDPI(); this.bindEvents();
+      }
+
+      initDPI() {
+        const dpr = window.devicePixelRatio || 1;
+        this.canvas.width = VIRTUAL_WIDTH * dpr; this.canvas.height = VIRTUAL_HEIGHT * dpr;
+        this.canvas.style.width = `${VIRTUAL_WIDTH}px`; this.canvas.style.height = `${VIRTUAL_HEIGHT}px`;
+        this.ctx.scale(dpr, dpr);
+      }
+
+      bindEvents() {
+        const startBtn = document.getElementById('startBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        const resumeBtn = document.getElementById('resumeBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const soundToggle = document.getElementById('soundToggle');
+        const diffBtns = document.querySelectorAll('.diff-btn');
+
+        startBtn.addEventListener('click', () => {
+          this.playerName = document.getElementById('playerName').value.trim().toUpperCase() || 'PLAYER 1';
+          this.sound.init(); // Unlock AudioContext
+          this.startCountdown();
+        });
+
+        restartBtn.addEventListener('click', () => {
+          document.getElementById('gameOverScreen').classList.add('hidden');
+          this.startCountdown();
+        });
+
+        resumeBtn.addEventListener('click', () => this.togglePause());
+        pauseBtn.addEventListener('click', () => this.togglePause());
+
+        window.addEventListener('keydown', (e) => {
+          if (e.key.toLowerCase() === 'p' && (this.state === 'PLAYING' || this.state === 'PAUSED')) this.togglePause();
+        });
+
+        soundToggle.addEventListener('click', () => {
+          this.sound.init();
+          const muted = this.sound.toggleMute();
+          soundToggle.textContent = muted ? 'AUDIO: OFF' : 'AUDIO: ON';
+          soundToggle.style.color = muted ? '#777' : 'var(--neon-cyan)';
+          soundToggle.style.borderColor = muted ? '#555' : 'var(--neon-cyan)';
+        });
+
+        diffBtns.forEach(btn => {
+          btn.addEventListener('click', () => {
+            diffBtns.forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            this.difficultyKey = btn.dataset.diff;
+            this.difficulty = CONFIG.difficulty[this.difficultyKey];
+          });
+        });
+
+        window.addEventListener('resize', () => this.initDPI());
+      }
+
+      togglePause() {
+        if (this.state === 'PLAYING') {
+          this.state = 'PAUSED'; document.getElementById('pauseScreen').classList.remove('hidden');
+          this.sound.stopBGM();
+        } else if (this.state === 'PAUSED') {
+          this.state = 'PLAYING'; document.getElementById('pauseScreen').classList.add('hidden');
+          this.sound.startBGM();
+        }
+      }
+
+      startCountdown() {
+        document.getElementById('startScreen').classList.add('hidden');
+        document.getElementById('gameOverScreen').classList.add('hidden');
+        document.getElementById('pauseScreen').classList.add('hidden');
+
+        this.player.score = 0; this.ai.score = 0; this.player.reset(); this.ai.reset(); this.powerUp = null;
+
+        const countdownOverlay = document.getElementById('countdownScreen');
+        const countdownText = document.getElementById('countdownText');
+        countdownOverlay.classList.remove('hidden');
+        this.state = 'COUNTDOWN';
+
+        const steps = [
+          { text: 'THREE', color: '#00f2fe', sfx: 440 },
+          { text: 'TWO',   color: '#00f2fe', sfx: 554 },
+          { text: 'ONE',   color: '#ffb703', sfx: 659 },
+          { text: 'GO!',   color: '#ff007f', sfx: 880 }
+        ];
+
+        let index = 0;
+        const tick = () => {
+          if (index >= steps.length) {
+            countdownOverlay.classList.add('hidden');
+            this.state = 'PLAYING';
+            this.ball.reset(true, this.difficulty);
+            
+            // Start the Procedural Sequencer!
+            this.sound.startBGM();
+            return;
+          }
+          const s = steps[index];
+          countdownText.textContent = s.text; countdownText.style.color = s.color;
+          countdownText.style.textShadow = `0 0 30px ${s.color}`; countdownText.style.animation = 'none';
+          void countdownText.offsetWidth; 
+          countdownText.style.animation = 'popZoom 0.85s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards';
+
+          this.sound.playTone(s.sfx, 'sine', 0.12, 0.25, false);
+          this.sound.speak(s.text.replace('!', ''));
+          
+          index++; setTimeout(tick, 900);
+        };
+        tick();
+      }
+
+      spawnPowerUp() {
+        const item = CONFIG.powerUps[Math.floor(Math.random() * CONFIG.powerUps.length)];
+        this.powerUp = {
+          ...item, x: VIRTUAL_WIDTH / 3 + Math.random() * (VIRTUAL_WIDTH / 3),
+          y: 60 + Math.random() * (VIRTUAL_HEIGHT - 120), size: 26, pulse: 0
+        };
+      }
+
+      checkPaddleCollision(paddle, isPlayer) {
+        const b = this.ball;
+        const nextX = b.x + b.vx * FIXED_TIMESTEP; const nextY = b.y + b.vy * FIXED_TIMESTEP;
+        const pLeft = paddle.x; const pRight = paddle.x + paddle.w;
+        const pTop = paddle.y; const pBottom = paddle.y + paddle.h;
+
+        const closestX = Math.max(pLeft, Math.min(nextX, pRight));
+        const closestY = Math.max(pTop, Math.min(nextY, pBottom));
+        const dx = nextX - closestX; const dy = nextY - closestY;
+
+        if (dx * dx + dy * dy <= b.r * b.r) {
+          const paddleCenter = paddle.y + paddle.h / 2;
+          let offset = (b.y - paddleCenter) / (paddle.h / 2);
+          offset = Math.max(-1, Math.min(1, offset));
+          const bounceAngle = offset * (Math.PI / 3.4); 
+
+          b.speed = Math.min(b.speed + 28, this.difficulty.maxBallSpeed);
+          const dir = isPlayer ? 1 : -1;
+          b.vx = dir * b.speed * Math.cos(bounceAngle); b.vy = b.speed * Math.sin(bounceAngle);
+          b.x = isPlayer ? pRight + b.r + 1 : pLeft - b.r - 1;
+
+          this.sound.playPaddleHit(isPlayer); this.fx.triggerShake(5);
+          this.fx.emitParticles(b.x, b.y, isPlayer ? '#ff0055' : '#00f2fe', 14, 280);
+        }
+      }
+
+      physicsStep(dt) {
+        if (this.state !== 'PLAYING') { this.fx.update(dt); return; }
+
+        this.player.update(dt, this.input, this.ball, this.difficulty);
+        this.ai.update(dt, this.input, this.ball, this.difficulty);
+        this.ball.update(dt); this.fx.update(dt);
+
+        if (this.ball.y - this.ball.r <= 0) {
+          this.ball.y = this.ball.r; this.ball.vy = -this.ball.vy;
+          this.sound.playWallHit(); this.fx.emitParticles(this.ball.x, this.ball.y, '#ffffff', 8, 140);
+        } else if (this.ball.y + this.ball.r >= VIRTUAL_HEIGHT) {
+          this.ball.y = VIRTUAL_HEIGHT - this.ball.r; this.ball.vy = -this.ball.vy;
+          this.sound.playWallHit(); this.fx.emitParticles(this.ball.x, this.ball.y, '#ffffff', 8, 140);
+        }
+
+        if (this.ball.vx < 0) this.checkPaddleCollision(this.player, true);
+        if (this.ball.vx > 0) this.checkPaddleCollision(this.ai, false);
+
+        if (!this.powerUp) {
+          this.powerUpSpawnCooldown -= dt;
+          if (this.powerUpSpawnCooldown <= 0) { this.spawnPowerUp(); this.powerUpSpawnCooldown = 8.0 + Math.random() * 5.0; }
+        } else {
+          this.powerUp.pulse += dt * 5;
+          const cx = this.powerUp.x + this.powerUp.size / 2; const cy = this.powerUp.y + this.powerUp.size / 2;
+          const dist = Math.hypot(this.ball.x - cx, this.ball.y - cy);
+
+          if (dist < this.ball.r + this.powerUp.size / 2) {
+            const beneficiary = this.ball.vx > 0 ? this.player : this.ai;
+            const victim = this.ball.vx > 0 ? this.ai : this.player;
+
+            if (this.powerUp.type === 'FREEZE') victim.freezeTimer = this.powerUp.duration;
+            else beneficiary.applyPower(this.powerUp.type, this.powerUp.duration);
+
+            this.sound.playPowerup(); this.sound.speak("Power up!"); this.fx.triggerShake(8);
+            this.fx.emitParticles(cx, cy, this.powerUp.color, 24, 300);
+            this.fx.spawnFloatingText(this.powerUp.label, cx, cy, this.powerUp.color);
+            this.powerUp = null;
+          }
+        }
+
+        if (this.ball.x + this.ball.r < 0) { this.ai.score++; this.handleScore(false); }
+        else if (this.ball.x - this.ball.r > VIRTUAL_WIDTH) { this.player.score++; this.handleScore(true); }
+      }
+
+      handleScore(playerScored) {
+        this.sound.playScore(); this.fx.triggerShake(12);
+        this.fx.emitParticles(playerScored ? VIRTUAL_WIDTH : 0, this.ball.y, playerScored ? '#00f2fe' : '#ff007f', 32, 400);
+
+        if (this.player.score >= WINNING_SCORE || this.ai.score >= WINNING_SCORE) this.triggerGameOver();
+        else this.ball.reset(playerScored, this.difficulty);
+      }
+
+      triggerGameOver() {
+        this.state = 'GAMEOVER'; this.sound.stopBGM();
+        const screen = document.getElementById('gameOverScreen');
+        const playerWon = this.player.score >= WINNING_SCORE;
+        document.getElementById('winnerText').textContent = playerWon ? `${this.playerName} DOMINATES` : 'AI SUPREMACY';
+        document.getElementById('winnerText').style.color = playerWon ? 'var(--neon-cyan)' : 'var(--neon-magenta)';
+        document.getElementById('matchStat').textContent = `FINAL SCORE: ${this.player.score} — ${this.ai.score} | RANK: ${this.difficultyKey}`;
+        screen.classList.remove('hidden');
+      }
+
+      render() {
+        const ctx = this.ctx;
+        ctx.save();
+        if (this.fx.screenShake > 0) {
+          ctx.translate((Math.random() - 0.5) * this.fx.screenShake, (Math.random() - 0.5) * this.fx.screenShake);
+        }
+
+        ctx.fillStyle = '#020008'; ctx.fillRect(0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
+        ctx.strokeStyle = 'rgba(255, 0, 127, 0.25)'; ctx.lineWidth = 2; ctx.setLineDash([8, 10]);
+        ctx.beginPath(); ctx.moveTo(VIRTUAL_WIDTH / 2, 0); ctx.lineTo(VIRTUAL_WIDTH / 2, VIRTUAL_HEIGHT); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.strokeStyle = 'rgba(0, 242, 254, 0.15)'; ctx.strokeRect(10, 10, VIRTUAL_WIDTH - 20, VIRTUAL_HEIGHT - 20);
+
+        ctx.font = "bold 13px 'Courier New', monospace"; ctx.fillStyle = '#ff007f'; ctx.textAlign = 'left';
+        ctx.fillText(this.playerName, 40, 36);
+        ctx.fillStyle = '#00f2fe'; ctx.textAlign = 'right'; ctx.fillText(`SYSTEM AI // [${this.difficultyKey}]`, VIRTUAL_WIDTH - 40, 36);
+
+        ctx.font = "900 52px 'Courier New', monospace"; ctx.textAlign = 'center';
+        ctx.fillStyle = 'rgba(255, 0, 127, 0.85)'; ctx.fillText(this.player.score, VIRTUAL_WIDTH / 4, 85);
+        ctx.fillStyle = 'rgba(0, 242, 254, 0.85)'; ctx.fillText(this.ai.score, (VIRTUAL_WIDTH / 4) * 3, 85);
+
+        if (this.powerUp) {
+          ctx.save();
+          const cx = this.powerUp.x + this.powerUp.size / 2; const cy = this.powerUp.y + this.powerUp.size / 2;
+          const scale = 1 + Math.sin(this.powerUp.pulse) * 0.08;
+          ctx.translate(cx, cy); ctx.scale(scale, scale);
+          ctx.shadowColor = this.powerUp.color; ctx.shadowBlur = 15; ctx.strokeStyle = this.powerUp.color; ctx.lineWidth = 2;
+          ctx.strokeRect(-this.powerUp.size / 2, -this.powerUp.size / 2, this.powerUp.size, this.powerUp.size);
+          ctx.fillStyle = 'rgba(255,255,255,0.08)'; ctx.fillRect(-this.powerUp.size / 2, -this.powerUp.size / 2, this.powerUp.size, this.powerUp.size);
+          ctx.font = "14px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(this.powerUp.icon, 0, 0);
+          ctx.restore();
+        }
+
+        this.player.render(ctx); this.ai.render(ctx); this.ball.render(ctx); this.fx.render(ctx);
+        ctx.save(); ctx.font = "10px 'Courier New', monospace"; ctx.textAlign = 'right';
+        ctx.fillStyle = 'rgba(0, 242, 254, 0.4)'; ctx.fillText("CYBER-PONG V2.4 PROTOTYPE // 60FPS DT-LOCKED", VIRTUAL_WIDTH - 20, VIRTUAL_HEIGHT - 16);
+        ctx.restore(); ctx.restore();
+      }
+
+      run(time) {
+        const delta = Math.min((time - this.lastTime) / 1000, 0.1);
+        this.lastTime = time; this.accumulator += delta;
+
+        while (this.accumulator >= FIXED_TIMESTEP) {
+          this.physicsStep(FIXED_TIMESTEP); this.accumulator -= FIXED_TIMESTEP;
+        }
+        this.render(); requestAnimationFrame((t) => this.run(t));
+      }
     }
 
-    requestAnimationFrame(loop);
+    window.addEventListener('load', () => {
+      const game = new GameEngine(); requestAnimationFrame((t) => game.run(t));
+    });
   </script>
 </body>
 </html>
